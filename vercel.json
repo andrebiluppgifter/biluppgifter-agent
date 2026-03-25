@@ -1,0 +1,11 @@
+{
+  "functions": {
+    "api/ask.py": {
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    { "source": "/api/ask", "destination": "/api/ask" },
+    { "source": "/(.*)", "destination": "/public/index.html" }
+  ]
+}
