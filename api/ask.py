@@ -8,16 +8,15 @@ import json
 import urllib.request
 import urllib.error
 import os
-import re
 
-DOCS_URL = "https://data.biluppgifter.se/"
+DOCS_URL = "http://data.biluppgifter.se/openapi/v1.json"
 
 # Module-level cache – lever under warm starts på samma instans
 _docs_cache: str | None = None
 
 
 def fetch_docs() -> str:
-    """Hämtar och sanerar HTML från Biluppgifters dokumentationssajt."""
+    """Hämtar och konverterar OpenAPI JSON-spec från Biluppgifter till läsbar text."""
     global _docs_cache
     if _docs_cache:
         return _docs_cache
@@ -27,15 +26,86 @@ def fetch_docs() -> str:
         headers={"User-Agent": "Mozilla/5.0 (compatible; BiluppgifterBot/1.0)"},
     )
     with urllib.request.urlopen(req, timeout=12) as resp:
-        html = resp.read().decode("utf-8", errors="replace")
+        data = json.loads(resp.read())
 
-    # Ta bort script/style och HTML-taggar
-    text = re.sub(r"<script[\s\S]*?</script>", " ", html, flags=re.IGNORECASE)
-    text = re.sub(r"<style[\s\S]*?</style>", " ", text, flags=re.IGNORECASE)
-    text = re.sub(r"<[^>]+>", " ", text)
-    text = re.sub(r"\s{2,}", " ", text).strip()
+    lines = []
 
-    _docs_cache = text[:40_000]  # Max ~40 000 tecken för att hålla oss inom tokens
+    # Grundinfo
+    info = data.get("info", {})
+    lines.append(f"# {info.get('title', 'Biluppgifter API')}")
+    if info.get("description"):
+        lines.append(info["description"])
+    lines.append(f"Version: {info.get('version', '')}\n")
+
+    # Bas-URLer
+    servers = data.get("servers", [])
+    if servers:
+        lines.append("## Base URLs")
+        for s in servers:
+            lines.append(f"- {s.get('url', '')}  {s.get('description', '')}")
+        lines.append("")
+
+    # Autentisering
+    components = data.get("components", {})
+    security_schemes = components.get("securitySchemes", {})
+    if security_schemes:
+        lines.append("## Autentisering")
+        for name, scheme in security_schemes.items():
+            lines.append(f"**{name}:** typ={scheme.get('type','')}  "
+                         f"in={scheme.get('in','')}  namn={scheme.get('name','')}")
+            if scheme.get("description"):
+                lines.append(scheme["description"])
+        lines.append("")
+
+    # Endpoints
+    paths = data.get("paths", {})
+    if paths:
+        lines.append("## Endpoints")
+        for path, methods in paths.items():
+            for method, details in methods.items():
+                if method not in ("get", "post", "put", "delete", "patch"):
+                    continue
+                lines.append(f"\n### {method.upper()} {path}")
+                if details.get("summary"):
+                    lines.append(f"**Sammanfattning:** {details['summary']}")
+                if details.get("description"):
+                    lines.append(f"**Beskrivning:** {details['description']}")
+
+                # Parametrar
+                params = details.get("parameters", [])
+                if params:
+                    lines.append("**Parametrar:**")
+                    for p in params:
+                        req_flag = " *(obligatorisk)*" if p.get("required") else ""
+                        ptype = p.get("schema", {}).get("type", "")
+                        desc = p.get("description", "")
+                        lines.append(f"- `{p.get('name')}` ({p.get('in')}, {ptype}{req_flag}): {desc}")
+
+                # Svar
+                responses = details.get("responses", {})
+                if responses:
+                    lines.append("**Svar:**")
+                    for code, resp in responses.items():
+                        lines.append(f"- {code}: {resp.get('description', '')}")
+
+    # Datamodeller
+    schemas = components.get("schemas", {})
+    if schemas:
+        lines.append("\n## Datamodeller")
+        for name, schema in schemas.items():
+            lines.append(f"\n### {name}")
+            if schema.get("description"):
+                lines.append(schema["description"])
+            props = schema.get("properties", {})
+            if props:
+                lines.append("**Fält:**")
+                for prop_name, prop in props.items():
+                    ptype = prop.get("type", "")
+                    pdesc = prop.get("description", "")
+                    lines.append(f"- `{prop_name}` ({ptype}): {pdesc}")
+
+    result = "\n".join(lines)
+    _docs_cache = result[:40_000]
     return _docs_cache
 
 
