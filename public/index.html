@@ -7,6 +7,496 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
   <style>
     :root {
+      --primary: #F97316;
+      --primary-dark: #EA580C;
+      --primary-light: rgba(249, 115, 22, 0.08);
+      --bg: #f9fafb;
+      --card: #ffffff;
+      --border: #e5e7eb;
+      --text: #111827;
+      --text-muted: #6b7280;
+      --error: #dc2626;
+      --error-bg: rgba(220, 38, 38, 0.06);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2.5rem 1rem 4rem;
+    }
+
+    .container { max-width: 760px; margin: 0 auto; }
+
+    /* ── Header ── */
+    header { text-align: center; margin-bottom: 2rem; }
+
+    .logo-area {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .logo-icon {
+      width: 44px;
+      height: 44px;
+      background: var(--primary);
+      border-radius: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+    }
+
+    header h1 { font-size: 1.6rem; font-weight: 700; color: var(--primary-dark); }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 0.9375rem;
+      max-width: 480px;
+      margin: 0.4rem auto 0;
+      line-height: 1.5;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.75rem;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    /* ── Labels & inputs ── */
+    .field-label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.375rem;
+      letter-spacing: 0.01em;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 0.65rem 0.9rem;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9375rem;
+      font-family: inherit;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      background: #fafafa;
+      min-height: 110px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    textarea:focus {
+      border-color: var(--primary);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.1);
+    }
+
+    .kbd-hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: right;
+      margin-top: 0.35rem;
+    }
+
+    /* ── Options row ── */
+    .options-row {
+      display: flex;
+      gap: 1.25rem;
+      margin: 1.25rem 0;
+      flex-wrap: wrap;
+    }
+
+    .option-group { flex: 1; min-width: 200px; }
+
+    /* ── Tone pills ── */
+    .pill-group { display: flex; gap: 0.5rem; margin-top: 0.375rem; }
+
+    .pill {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      padding: 0.55rem 0.75rem;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: all 0.15s;
+      user-select: none;
+    }
+
+    .pill:hover { border-color: var(--primary); color: var(--primary); }
+    .pill.active {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+    .pill input[type="radio"] { display: none; }
+
+    /* ── Toggle switch ── */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+      cursor: pointer;
+    }
+
+    .switch { position: relative; width: 46px; height: 26px; flex-shrink: 0; }
+    .switch input { display: none; }
+
+    .switch-track {
+      position: absolute;
+      inset: 0;
+      background: var(--border);
+      border-radius: 13px;
+      transition: background 0.2s;
+    }
+
+    .switch-thumb {
+      position: absolute;
+      width: 20px; height: 20px;
+      background: white;
+      border-radius: 50%;
+      top: 3px; left: 3px;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    }
+
+    .switch input:checked ~ .switch-track { background: var(--primary); }
+    .switch input:checked ~ .switch-thumb { transform: translateX(20px); }
+
+    .toggle-text { font-size: 0.875rem; color: var(--text); }
+
+    /* ── Submit button ── */
+    .btn-submit {
+      width: 100%;
+      padding: 0.8rem 1.5rem;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 9px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn-submit:hover { background: var(--primary-dark); }
+    .btn-submit:active { transform: scale(0.99); }
+    .btn-submit:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+    /* ── Response card ── */
+    .response-card { display: none; }
+    .response-card.visible { display: block; }
+
+    /* ── Loader ── */
+    .loader {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      padding: 0.5rem 0;
+    }
+
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2.5px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Error ── */
+    .error-box {
+      background: var(--error-bg);
+      border: 1px solid rgba(220, 38, 38, 0.2);
+      border-radius: 8px;
+      padding: 0.875rem 1rem;
+      color: var(--error);
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+
+    /* ── Badges ── */
+    .badge-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.25rem 0.7rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: var(--primary-light);
+      color: var(--primary);
+      border: 1px solid rgba(26, 86, 219, 0.15);
+    }
+
+    /* ── Markdown ── */
+    .md-content { line-height: 1.75; font-size: 0.9375rem; color: var(--text); }
+
+    .md-content h1, .md-content h2, .md-content h3 {
+      color: var(--primary-dark);
+      margin: 1.25rem 0 0.5rem;
+      font-weight: 600;
+    }
+    .md-content h1 { font-size: 1.25rem; }
+    .md-content h2 { font-size: 1.1rem; }
+    .md-content h3 { font-size: 1rem; }
+    .md-content p { margin-bottom: 0.75rem; }
+
+    .md-content code {
+      background: #f1f3f5;
+      padding: 0.125rem 0.4rem;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+      font-size: 0.84em;
+      color: #374151;
+    }
+
+    .md-content pre {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 1rem 1.25rem;
+      border-radius: 10px;
+      overflow-x: auto;
+      margin: 0.75rem 0;
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+
+    .md-content pre code {
+      background: none; padding: 0; color: inherit; font-size: inherit;
+    }
+
+    .md-content ul, .md-content ol { padding-left: 1.5rem; margin: 0.5rem 0 0.75rem; }
+    .md-content li { margin-bottom: 0.25rem; }
+
+    .md-content blockquote {
+      border-left: 3px solid var(--primary);
+      padding: 0.5rem 1rem;
+      color: var(--text-muted);
+      margin: 0.75rem 0;
+      background: var(--primary-light);
+      border-radius: 0 6px 6px 0;
+    }
+
+    .md-content table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 0.875rem;
+      margin: 0.75rem 0;
+    }
+    .md-content th, .md-content td {
+      border: 1px solid var(--border);
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+    }
+    .md-content th { background: #f9fafb; font-weight: 600; }
+    .md-content tr:hover { background: #fafafa; }
+    .md-content a { color: var(--primary); }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 2rem;
+    }
+    footer a { color: var(--primary); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <header>
+      <div class="logo-area">
+        <div class="logo-icon" style="background:#F97316; border-radius:10px; color:white; font-size:1.5rem; font-weight:900; font-style:italic; font-family:Georgia,serif; letter-spacing:-1px;">b</div>
+        <h1>Biluppgifter API-assistent</h1>
+      </div>
+      <p>Ställ din fråga om Biluppgifters API – svaret baseras uteslutande på den officiella dokumentationen.</p>
+    </header>
+
+    <div class="card">
+
+      <!-- Fråga -->
+      <label class="field-label" for="question">Din fråga</label>
+      <textarea
+        id="question"
+        placeholder="T.ex.: Hur autentiserar jag mot API:et? Vilka endpoints finns? Hur söker jag på ett registreringsnummer? Vad kostar API-åtkomst?"
+      ></textarea>
+      <p class="kbd-hint">Tryck Enter för att skicka · Shift+Enter för ny rad</p>
+
+      <!-- Alternativ -->
+      <div class="options-row">
+
+        <div class="option-group">
+          <span class="field-label">Ton på svaret</span>
+          <div class="pill-group">
+            <label class="pill active" id="pill-technical" onclick="selectTone('technical')">
+              <input type="radio" name="tone" value="technical" checked />
+              🔧 Tekniskt
+            </label>
+            <label class="pill" id="pill-curious" onclick="selectTone('curious')">
+              <input type="radio" name="tone" value="curious" />
+              🔍 Nyfiket
+            </label>
+          </div>
+        </div>
+
+        <div class="option-group">
+          <span class="field-label">Källreferenser</span>
+          <label class="toggle-row">
+            <div class="switch">
+              <input type="checkbox" id="includeRefs" checked />
+              <div class="switch-track"></div>
+              <div class="switch-thumb"></div>
+            </div>
+            <span class="toggle-text" id="refsLabel">Ja, inkludera referenser</span>
+          </label>
+        </div>
+
+      </div>
+
+      <button class="btn-submit" id="submitBtn" onclick="askQuestion()">
+        <span>Ställ frågan</span>
+        <span>→</span>
+      </button>
+    </div>
+
+    <!-- Svar -->
+    <div class="card response-card" id="responseCard">
+      <div id="responseContent"></div>
+    </div>
+
+    <footer>
+      Svar baseras uteslutande på
+      <a href="http://data.biluppgifter.se/openapi/v1.json" target="_blank" rel="noopener">data.biluppgifter.se/openapi/v1.json</a>
+      · Drivs av Claude (Anthropic)
+    </footer>
+
+  </div>
+
+  <script>
+    let currentTone = 'technical';
+
+    function selectTone(value) {
+      currentTone = value;
+      document.getElementById('pill-technical').classList.toggle('active', value === 'technical');
+      document.getElementById('pill-curious').classList.toggle('active', value === 'curious');
+    }
+
+    document.getElementById('includeRefs').addEventListener('change', function () {
+      document.getElementById('refsLabel').textContent = this.checked
+        ? 'Ja, inkludera referenser'
+        : 'Nej, bara svaret';
+    });
+
+    document.getElementById('question').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        askQuestion();
+      }
+    });
+
+    async function askQuestion() {
+      const question = document.getElementById('question').value.trim();
+      const includeRefs = document.getElementById('includeRefs').checked;
+
+      if (!question) {
+        showError('Skriv in en fråga för att fortsätta.');
+        return;
+      }
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      showResponse('<div class="loader"><div class="spinner"></div>Hämtar svar…</div>');
+
+      try {
+        const res = await fetch('/api/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            question,
+            tone: currentTone,
+            includeRefs,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          throw new Error(data.error || `HTTP ${res.status}`);
+        }
+
+        const toneBadge = currentTone === 'technical' ? '🔧 Tekniskt' : '🔍 Nyfiket';
+        const refBadge  = includeRefs ? '<span class="badge">📎 Med referenser</span>' : '';
+
+        showResponse(`
+          <div class="badge-row">
+            <span class="badge">${toneBadge}</span>
+            ${refBadge}
+          </div>
+          <div class="md-content">${marked.parse(data.answer)}</div>
+        `);
+
+      } catch (err) {
+        showError(err.message || 'Något gick fel. Försök igen.');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function showResponse(html) {
+      const card = document.getElementById('responseCard');
+      document.getElementById('responseContent').innerHTML = html;
+      card.classList.add('visible');
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function showError(msg) {
+      showResponse(`<div class="error-box">⚠️ ${msg}</div>`);
+    }
+  </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Biluppgifter API-assistent</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+  <style>
+    :root {
       --primary: #1a56db;
       --primary-dark: #1e429f;
       --primary-light: rgba(26, 86, 219, 0.08);
